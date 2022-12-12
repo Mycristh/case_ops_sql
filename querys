@@ -1,0 +1,65 @@
+-- importando os dados
+copy caso.ops(n_cobranca, n_aluno, n_matricula, aluno, turma, periodo_letivo, curso, unidade, spc, data_vencimento, valor_bruto, desconto_bolsa, valor_esperado, valor_pagamento, data_pagamento, data_credito, forma_pagamento, data_competencia, banco, agencia, conta, carteira, sacado, cpf_sacado, telefone_sacado, celular_sacado, email, logradouro_sacado, n_logradouro_sacado, complemento_sacado, bairro_sacado, municipio_sacado, uf_sacado, cep_sacado, evento_financeiro ) from 'C:\Users\mycri\Desktop\isaac\ops.csv' delimiter ';' csv header NULL '' ENCODING 'LATIN1';
+
+-- querys
+-- cobranças do colégio XPTO com valor_esperado maior do que 300 e a soma total do valor_esperado
+with tab1 as
+(select
+ unidade, 
+ valor_esperado
+from caso.ops
+where unidade = 'COLÉGIO XPTO ' and valor_esperado > 300
+order by valor_esperado)
+
+select 
+ sum(valor_esperado)
+from tab1
+
+-- crie uma coluna com o status de pagamento "Pago" e "Não pago" e indique a quantidade de cobrança em cada status.
+with tab3 as
+(select 
+  n_cobranca,
+  valor_pagamento,
+  case when valor_pagamento is null then 'Não Pago' else 'Pago' end as status
+from caso.ops)
+
+select 
+ count (status), 
+ status
+from tab3
+group by status
+
+-- apresente o somatório do valor esperado, valor bruto e de desconto de cada unidade.
+select 
+ distinct unidade,
+ sum(valor_esperado) as sum_valor_esperado,
+ sum(valor_bruto) as sum_valor_bruto,
+ sum(desconto_bolsa) as sum_desconto_bolsa
+from caso.ops
+where unidade is not null
+group by unidade
+
+--apresente quantos casos são os que faltam alguma informação de contato.
+select 
+ count(telefone_sacado) as null_tel, 
+ count (celular_sacado) as null_cel, 
+ count (email) as null_email
+from caso.ops
+where telefone_sacado is null or celular_sacado is null or email is null
+
+-- valor esperado por período letivo
+select 
+ sum(valor_esperado), 
+ periodo_letivo 
+from caso.ops
+group by periodo_letivo
+order by periodo_letivo
+
+-- unidade com mais desconto na bolsa no período letivo de 2020.
+select 
+ periodo_letivo, 
+ unidade, 
+ sum(desconto_bolsa) as sum_desconto_bolsa
+from caso.ops
+where periodo_letivo = '2020'
+group by periodo_letivo, unidade
